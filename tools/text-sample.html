@@ -1,0 +1,41 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>text sample (GAME_DESIGN.md 6장, 게이트 1 항목 7)</title>
+<style>
+  body { background: #101828; margin: 16px; color: #ffffff; font: 14px monospace; }
+  canvas { width: 768px; height: 240px; image-rendering: pixelated; display: block; margin-top: 8px; }
+</style>
+<p>12px 한글 렌더 샘플: 알파 128 이상만 팔레트 색으로 전사. 읽히지 않으면 6장 가독성 조항을 따른다.</p>
+<canvas id="c" width="256" height="80"></canvas>
+<script>
+  const PAL_BG = '#101828';
+  const PAL_FG = '#ffffff';
+  const THRESHOLD = 128;
+  const strings = ['Space/Enter로 시작', '남은 시간 90', '편지 3', '배달 완료!', '해가 졌어요', 'R: 다시 시작'];
+  const main = document.getElementById('c');
+  const ctx = main.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = PAL_BG;
+  ctx.fillRect(0, 0, main.width, main.height);
+  const off = document.createElement('canvas');
+  off.width = 256;
+  off.height = 16;
+  const octx = off.getContext('2d', { willReadFrequently: true });
+  const fg = PAL_FG;
+  strings.forEach((text, i) => {
+    octx.clearRect(0, 0, off.width, off.height);
+    octx.font = '12px monospace';
+    octx.textBaseline = 'alphabetic';
+    octx.fillStyle = '#fff';
+    octx.fillText(text, 0, 12);
+    const data = octx.getImageData(0, 0, off.width, off.height).data;
+    ctx.fillStyle = fg;
+    const col = i % 2;
+    const row = Math.floor(i / 2);
+    for (let y = 0; y < off.height; y++) {
+      for (let x = 0; x < off.width; x++) {
+        if (data[(y * off.width + x) * 4 + 3] >= THRESHOLD) ctx.fillRect(col * 128 + x, row * 24 + 4 + y, 1, 1);
+      }
+    }
+  });
+</script>
