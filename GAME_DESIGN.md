@@ -36,14 +36,16 @@
 
 ## 4장 — 엔티티
 
-| 이름 | 설명 |
-|---|---|
-| Snail | 플레이어. 격자 좌표 `(x, y)`, 이동 쿨다운 틱 |
-| House | 집 3채. 통행 불가. `delivered` 여부. 읽기 순서(행 우선)로 H1, H2, H3 |
-| Letter | 집마다 1통. 남은 편지 수 = 미배달 집 수 |
-| Sun | 상단 레인의 해. 남은 시간에서 파생되는 x 좌표 |
-| Timer | `remainingMs` 정수(시작 90000) |
-| Map | 16x12 격자 |
+코드 기준 v1. 이름·필드는 `src/logic.js`, 스프라이트는 `src/sprites.js`(전부 16x16)의 값이다.
+
+| 이름 | 코드 위치 | 필드·규칙 | 스프라이트 |
+|---|---|---|---|
+| Snail | `state.snail`, `state.moveCooldown` | 격자 좌표 `(x, y)`, 시작 `S`=(1,6), 이동 쿨다운 틱(0~9) | `SPRITES.snail` |
+| House | `level.houses[i]`, `state.delivered[i]` | 집 3채, 통행 불가, 읽기 순서(행 우선) H1=(1,0), H2=(6,5), H3=(14,10), 배달 여부 불리언 | `SPRITES.house` |
+| Letter | `state.lettersRemaining` | 집마다 1통, 남은 편지 수 = 미배달 집 수(시작 3). 개별 객체·스프라이트 없이 HUD 숫자로만 표시(확정) | 없음 |
+| Sun | `sunX(remainingMs)` | 상단 레인 y=8 고정, x는 남은 시간에서 파생(8~232) | `SPRITES.sun` |
+| Timer | `state.remainingMs` | 정수 ms, 시작 90000, 틱당 50 감소 | 없음(HUD 텍스트) |
+| Map | `level.rows` | 16x12 격자, 타일 종류 `#` `.` `S` `H` | `SPRITES.wall`, `SPRITES.floor` |
 
 ## 5장 — 맵
 
@@ -108,16 +110,16 @@
 
 팔레트(이 8색만 쓴다. 이 표 = `src/sprites.js` 팔레트 = `index.html` CSS hex 집합의 상위집합이다):
 
-| idx | hex | 용도 |
-|---|---|---|
-| 0 | `#101828` | 밤 하늘, HUD/메시지 배경 |
-| 1 | `#2a4b8d` | 낮 하늘 |
-| 2 | `#e86a33` | 노을 하늘, 지붕 |
-| 3 | `#f7d26a` | 해, 편지 |
-| 4 | `#7fc26b` | 달팽이 몸, 길 풀 |
-| 5 | `#4a3222` | 달팽이 껍데기, 벽, 수평선 |
-| 6 | `#c8c0b0` | 길 타일, 집 벽면 |
-| 7 | `#ffffff` | HUD/중앙 문구 텍스트 |
+| idx | hex | 용도 | 코드 사용처(픽셀 수) |
+|---|---|---|---|
+| 0 | `#101828` | 밤 하늘, HUD/메시지 박스 배경, 벽 줄무늬 | wall 32, snail 1; main.js 밤 하늘·HUD·메시지 박스 배경 |
+| 1 | `#2a4b8d` | 낮 하늘 | main.js 낮 하늘 |
+| 2 | `#e86a33` | 노을 하늘, 지붕 | house 56; main.js 노을 하늘 |
+| 3 | `#f7d26a` | 해, 집 창문 | sun 188, house 8 |
+| 4 | `#7fc26b` | 달팽이 몸, 길 풀 | snail 54, floor 2 |
+| 5 | `#4a3222` | 달팽이 껍데기, 벽, 집 문, 수평선 | wall 224, house 12, snail 45; main.js 수평선 |
+| 6 | `#c8c0b0` | 길 타일, 집 벽면, 달팽이 눈 | floor 254, house 64, snail 4 |
+| 7 | `#ffffff` | HUD/중앙 문구 텍스트, 메시지 박스 테두리, 달팽이 더듬이 끝 | snail 1; main.js·text.js 텍스트·박스 테두리 |
 
 텍스트 렌더링(A9 실현): 외부 폰트를 내려받지 않고 시스템 기본 monospace로 오프스크린 캔버스에 `fillText`한 뒤, `getImageData`의 알파가 128 이상인 픽셀만 팔레트 색으로 메인 캔버스에 전사한다(128 미만은 버린다). 임계 규칙은 순수 함수 `alphaMask(alphaArray, 128)`로 분리해 테스트하고, 캔버스 접근 코드는 `src/text.js`(셸 계층)에 둔다. 문구 집합은 유한하므로 문구별 마스크를 1회 생성해 캐시한다.
 
