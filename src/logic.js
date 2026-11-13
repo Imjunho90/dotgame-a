@@ -18,6 +18,9 @@ export const CONSTANTS = Object.freeze({
   SUN_X_MIN: 8,
   SUN_X_MAX: 232,
   ALPHA_THRESHOLD: 128,
+  ENEMY_MOVE_INTERVAL_TICKS: 20,
+  ENEMY_MOVE_COOLDOWN_RELOAD: 19,
+  ENEMY_START_COOLDOWN: 0,
 });
 
 const C = CONSTANTS;
@@ -33,20 +36,27 @@ export const DIRECTIONS = Object.freeze({
 export function parseLevel(rows) {
   const houses = [];
   let start = null;
+  const patrolEnds = [];
   rows.forEach((row, y) => {
     for (let x = 0; x < row.length; x++) {
+      if (row[x] === 'P') patrolEnds.push({ x, y });
       if (row[x] === 'H') houses.push({ x, y });
       if (row[x] === 'S') start = { x, y };
     }
   });
-  return { rows, width: rows[0].length, height: rows.length, houses, start };
+  // Patrol = the two 'P' ends and every tile between them (same column, top to bottom).
+  const patrol = [];
+  if (patrolEnds.length === 2) {
+    for (let y = patrolEnds[0].y; y <= patrolEnds[1].y; y++) patrol.push({ x: patrolEnds[0].x, y });
+  }
+  return { rows, width: rows[0].length, height: rows.length, houses, start, patrol };
 }
 
-/** Floor and start tiles are walkable. Walls, houses, and anything outside the grid are not. */
+/** Floor, start, and patrol tiles are walkable. Walls, houses, and anything outside the grid are not. */
 export function isWalkable(level, x, y) {
   if (y < 0 || y >= level.height || x < 0 || x >= level.width) return false;
   const c = level.rows[y][x];
-  return c === '.' || c === 'S';
+  return c === '.' || c === 'S' || c === 'P';
 }
 
 export function createInitialState(level) {
@@ -58,6 +68,8 @@ export function createInitialState(level) {
     snail: { x: level.start.x, y: level.start.y },
     moveCooldown: 0,
     delivered: level.houses.map(() => false),
+    enemy: { index: 0, dirSign: 1, cooldown: C.ENEMY_START_COOLDOWN },
+    loseCause: null,
     input: { stack: [], latched: null },
   };
 }

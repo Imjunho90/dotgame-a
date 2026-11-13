@@ -7,9 +7,15 @@ import {
   RANGE_MAX_STEPS,
   RANGE_MIN_STEPS,
   checkInvariants,
+  TOTAL_TICKS,
+  enemyCycleTicks,
   extractGridBlock,
+  humanWitness,
   parseGrid,
+  patrolOf,
+  replayWithEnemy,
   shortestRoute,
+  shortestRouteWithEnemy,
 } from './route.mjs';
 
 const designPath = fileURLToPath(new URL('../GAME_DESIGN.md', import.meta.url));
@@ -39,6 +45,37 @@ if (route && recSeconds && Number(recSeconds[1]).toFixed(1) !== route.seconds.to
 }
 if (route && (route.steps < RANGE_MIN_STEPS || route.steps > RANGE_MAX_STEPS)) {
   problems.push(`steps ${route.steps} outside ${RANGE_MIN_STEPS}..${RANGE_MAX_STEPS}`);
+}
+
+// 5장-2: enemy-inclusive measurements.
+const patrol = patrolOf(grid);
+const withEnemy = shortestRouteWithEnemy(grid);
+const witness = replayWithEnemy(grid, humanWitness(grid, 962));
+const late = replayWithEnemy(grid, humanWitness(grid, 962 + enemyCycleTicks(patrol.length)));
+let firstExposure = null;
+{
+  let x = grid.start.x;
+  let y = grid.start.y;
+  const on = (px, py) => patrol.some((p) => p.x === px && p.y === py);
+  route.moves.some((m, k) => {
+    x += m === 'right' ? 1 : m === 'left' ? -1 : 0;
+    y += m === 'down' ? 1 : m === 'up' ? -1 : 0;
+    if (on(x, y)) firstExposure = 1 + 10 * k;
+    return firstExposure !== null;
+  });
+}
+const measured = {
+  '적 포함 최소 승리 틱': withEnemy?.tick,
+  '사람용 증인 승리 틱': witness.status === 'win' ? witness.tick : null,
+  '위상 최악 상한(틱)': late.status === 'win' ? late.tick : null,
+  '최초 노출 틱': firstExposure,
+};
+for (const [label, value] of Object.entries(measured)) {
+  console.log(`${label}: ${value}`);
+  const rec = markdown.match(new RegExp(`^- ${label.replace(/[()]/g, '\\$&')}: (\\d+)\\s*$`, 'm'));
+  if (!rec) problems.push(`chapter 5-2 recorded "${label}" not found`);
+  else if (Number(rec[1]) !== value) problems.push(`recorded ${label} ${rec[1]} != computed ${value}`);
+  if (value === null || value === undefined || value >= TOTAL_TICKS) problems.push(`${label} missing or beyond ${TOTAL_TICKS - 1} ticks`);
 }
 
 if (problems.length) {

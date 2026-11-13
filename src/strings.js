@@ -5,5 +5,6 @@ export const STRINGS = Object.freeze({
   HUD_LETTERS: '편지',
   WIN: '배달 완료!',
   LOSE: '해가 졌어요',
+  LOSE_CAUGHT: '잡혔어요!',
   RESTART_HINT: 'R: 다시 시작',
 });
