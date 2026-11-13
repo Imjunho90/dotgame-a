@@ -127,7 +127,8 @@ export function deliverAdjacent(level, delivered, x, y) {
  * One 50 ms tick. Order (GAME_DESIGN.md 7장 규칙 2, 5):
  * 1) remainingMs -= 50; 2) remainingMs <= 0 => lose, no move or delivery;
  * 3) move (cooldown 0 + direction), reload cooldown to 9 on success, else decrement;
- * 4) deliver; 5) win only if every letter is delivered and remainingMs > 0.
+ * 4) deliver; 5) win only if every letter is delivered and remainingMs > 0 (ends the tick);
+ * 6) enemy step (7장 규칙 12). Collision (규칙 13) is not implemented yet.
  */
 export function tick(state) {
   if (state.status !== 'playing') return state;
@@ -153,8 +154,27 @@ export function tick(state) {
     }
   }
   if (!moved && moveCooldown > 0) moveCooldown -= 1;
-  const status = lettersRemaining === 0 ? 'win' : 'playing';
-  return { ...state, remainingMs, status, snail, moveCooldown, delivered, lettersRemaining, input: cleared };
+  if (lettersRemaining === 0) {
+    // Win ends the tick: the enemy does not move (7장 규칙 2 ④).
+    return { ...state, remainingMs, status: 'win', snail, moveCooldown, delivered, lettersRemaining, input: cleared };
+  }
+  const enemy = stepEnemy(state.enemy, state.level.patrol.length);
+  return { ...state, remainingMs, status: 'playing', snail, moveCooldown, delivered, lettersRemaining, enemy, input: cleared };
+}
+
+/** Grid tile of the enemy at patrol `index` (0 = top). */
+export function enemyTileAt(level, index) {
+  return level.patrol[index];
+}
+
+/** 7장 규칙 12: cooldown tick, or flip at the end and move one tile this same tick. */
+export function stepEnemy(enemy, patrolLen) {
+  if (patrolLen < 2) return enemy; // level without a patrol: no enemy movement
+  if (enemy.cooldown > 0) return { ...enemy, cooldown: enemy.cooldown - 1 };
+  let { index, dirSign } = enemy;
+  if (index + dirSign < 0 || index + dirSign >= patrolLen) dirSign = -dirSign;
+  index += dirSign;
+  return { index, dirSign, cooldown: C.ENEMY_MOVE_COOLDOWN_RELOAD };
 }
 
 /** Sky colour stage from integer remainingMs: > 45000 day, > 18000 sunset, else night. */

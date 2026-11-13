@@ -107,6 +107,8 @@ function render() {
     }
   }
   level.houses.forEach((h) => drawSprite(SPRITES.house, h.x * TILE, MAP_Y + h.y * TILE));
+  const et = state.level.patrol[state.enemy.index];
+  if (et) drawSprite(SPRITES.enemy, et.x * TILE, MAP_Y + et.y * TILE);
   drawSprite(SPRITES.snail, state.snail.x * TILE, MAP_Y + state.snail.y * TILE);
 
   ctx.fillStyle = PALETTE[0];
