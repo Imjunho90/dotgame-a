@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { LEVEL_ROWS } from '../src/levels.js';
 import { CONSTANTS, createInitialState, deliverAdjacent, isWalkable, parseLevel, pressKey, releaseKey, applyRestart, applyStart, tick } from '../src/logic.js';
-import { checkInvariants, deliverMask, humanWitness, parseGrid, replayWithEnemy, shortestRoute, shortestRouteWithEnemy, walkable } from '../tools/route.mjs';
+import { checkInvariants, deliverMask, humanWitness, parseGrid, shortestRoute, shortestRouteWithEnemy, walkable } from '../tools/route.mjs';
 
 const level = parseLevel(LEVEL_ROWS);
 const grid = parseGrid(LEVEL_ROWS);

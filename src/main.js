@@ -107,9 +107,9 @@ function render() {
     }
   }
   level.houses.forEach((h) => drawSprite(SPRITES.house, h.x * TILE, MAP_Y + h.y * TILE));
-  const et = state.level.patrol[state.enemy.index];
-  if (et) drawSprite(SPRITES.enemy, et.x * TILE, MAP_Y + et.y * TILE);
   drawSprite(SPRITES.snail, state.snail.x * TILE, MAP_Y + state.snail.y * TILE);
+  const et = state.level.patrol[state.enemy.index];
+  if (et) drawSprite(SPRITES.enemy, et.x * TILE, MAP_Y + et.y * TILE); // drawn last so contact shows the enemy on top
 
   ctx.fillStyle = PALETTE[0];
   ctx.fillRect(0, HUD_Y, 256, 16);

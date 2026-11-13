@@ -256,19 +256,23 @@ test('enemy does nothing in ready, win and lose; start key tick does not move it
   assert.equal(tick(win), win);
 });
 
-test('enemy overlap changes nothing yet: snail and timer behave as before', () => {
+test('a level without a patrol never moves or catches anything', () => {
   const lvl = parseLevel(['#####', '#S.H#', '#####']);
-  const s = { ...createInitialState(lvl), status: 'playing', enemy: { index: 0, dirSign: 1, cooldown: 5 } };
-  assert.deepEqual(tick(s).snail, s.snail);
-  assert.equal(tick(s).remainingMs, 90000 - 50);
+  const s = { ...createInitialState(lvl), status: 'playing' };
+  const n = tick(s);
+  assert.deepEqual(n.enemy, s.enemy);
+  assert.equal(n.status, 'playing');
+  assert.equal(n.remainingMs, 90000 - 50);
 });
 
 test('the win tick does not move the enemy (7장 규칙 2 ④)', () => {
-  let s = { ...createInitialState(parseLevel(['#H####', '#.S..#', '######'])), status: 'playing' };
-  s = { ...s, enemy: { index: 3, dirSign: 1, cooldown: 0 } };
-  s = tick(pressKey(s, 'left'));
+  const lvl = parseLevel(['#####', '#P###', '#.HS#', '#P###', '#####']);
+  assert.equal(lvl.patrol.length, 3);
+  let s = { ...createInitialState(lvl), status: 'playing', snail: { x: 1, y: 1 }, enemy: { index: 0, dirSign: 1, cooldown: 0 } };
+  const before = s.enemy;
+  s = tick(pressKey(s, 'down')); // delivers the only house
   assert.equal(s.status, 'win');
-  assert.deepEqual(s.enemy, { index: 3, dirSign: 1, cooldown: 0 });
+  assert.deepEqual(s.enemy, before);
 });
 
 test('enemy sprite is 16x16, palette-only, and differs from the snail and house sprites', () => {

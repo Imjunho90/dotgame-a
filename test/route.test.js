@@ -158,7 +158,6 @@ test('human witness wins at 1192 with zero collisions; recorded values match', (
   const w = replayWithEnemy(realGrid, humanWitness(realGrid, 962));
   assert.deepEqual(w, { status: 'win', tick: 1192 });
   assert.equal(recorded('사람용 증인 승리 틱'), 1192);
-  assert.equal((90000 - 691 * 50) / 1000 > 55, true); // HUD ~56 at arrival
   assert.equal(Math.ceil((90000 - 1192 * 50) / 1000), 31);
 });
 
