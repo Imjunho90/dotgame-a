@@ -118,7 +118,9 @@ function render() {
 
   if (state.status === 'ready') drawMessageBox([STRINGS.START_PROMPT]);
   if (state.status === 'win') drawMessageBox([STRINGS.WIN, STRINGS.RESTART_HINT]);
-  if (state.status === 'lose') drawMessageBox([STRINGS.LOSE, STRINGS.RESTART_HINT]);
+  if (state.status === 'lose') {
+    drawMessageBox([state.loseCause === 'caught' ? STRINGS.LOSE_CAUGHT : STRINGS.LOSE, STRINGS.RESTART_HINT]);
+  }
 }
 
 let accMs = 0;

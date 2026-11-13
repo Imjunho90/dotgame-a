@@ -128,14 +128,14 @@ export function deliverAdjacent(level, delivered, x, y) {
  * 1) remainingMs -= 50; 2) remainingMs <= 0 => lose, no move or delivery;
  * 3) move (cooldown 0 + direction), reload cooldown to 9 on success, else decrement;
  * 4) deliver; 5) win only if every letter is delivered and remainingMs > 0 (ends the tick);
- * 6) enemy step (7장 규칙 12). Collision (규칙 13) is not implemented yet.
+ * 6) enemy step (규칙 12), then contact check (규칙 13) => lose with loseCause 'caught'.
  */
 export function tick(state) {
   if (state.status !== 'playing') return state;
   const remainingMs = state.remainingMs - C.TICK_MS;
   const cleared = { stack: state.input.stack, latched: null };
   if (remainingMs <= 0) {
-    return { ...state, remainingMs: 0, status: 'lose', input: cleared };
+    return { ...state, remainingMs: 0, status: 'lose', loseCause: 'time', input: cleared };
   }
   let { snail, moveCooldown, delivered, lettersRemaining } = state;
   let moved = false;
@@ -159,7 +159,32 @@ export function tick(state) {
     return { ...state, remainingMs, status: 'win', snail, moveCooldown, delivered, lettersRemaining, input: cleared };
   }
   const enemy = stepEnemy(state.enemy, state.level.patrol.length);
-  return { ...state, remainingMs, status: 'playing', snail, moveCooldown, delivered, lettersRemaining, enemy, input: cleared };
+  const caught = enemyContact(state.level, state.snail, snail, state.enemy, enemy);
+  return {
+    ...state,
+    remainingMs,
+    status: caught ? 'lose' : 'playing',
+    loseCause: caught ? 'caught' : null,
+    snail,
+    moveCooldown,
+    delivered,
+    lettersRemaining,
+    enemy,
+    input: cleared,
+  };
+}
+
+/**
+ * 7장 규칙 13: same tile after both moved, or a swap-through (snail A->B while the enemy B->A).
+ * Entering the tile the enemy leaves on the same tick is not contact (13-3); 4-adjacency is safe.
+ */
+function enemyContact(level, snailBefore, snailAfter, enemyBefore, enemyAfter) {
+  if (level.patrol.length < 2) return false;
+  const after = level.patrol[enemyAfter.index];
+  const before = level.patrol[enemyBefore.index];
+  if (snailAfter.x === after.x && snailAfter.y === after.y) return true;
+  const moved = snailBefore.x !== snailAfter.x || snailBefore.y !== snailAfter.y;
+  return moved && snailAfter.x === before.x && snailAfter.y === before.y && snailBefore.x === after.x && snailBefore.y === after.y;
 }
 
 /** Grid tile of the enemy at patrol `index` (0 = top). */
